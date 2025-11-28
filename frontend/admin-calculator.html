@@ -911,6 +911,11 @@ Paste your product URLs here..."></textarea>
                     tags += `Rating: ${product.rating} (${product.reviews} reviews)`;
                 }
 
+                // Store collection in product if not already set
+                if (!product.customCollection) {
+                    product.customCollection = finalCollection;
+                }
+
                 return `
                     <tr>
                         <td>${product.name || 'Unnamed'}</td>
@@ -922,9 +927,11 @@ Paste your product URLs here..."></textarea>
                         <td><input type="number" value="${(calc.msrpRounded || 0).toFixed(2)}" step="5" onchange="updateMsrpOverride(${idx}, parseFloat(this.value))"></td>
                         <td><input type="text" value="${product.sku || ''}" onchange="updateReviewField(${idx}, 'sku', this.value)"></td>
                         <td>
-                            <span class="collection-badge ${collectionInfo.uncertain ? 'uncertain' : ''}">
-                                ${collectionInfo.collection}
-                            </span>
+                            <input type="text"
+                                   value="${product.customCollection}"
+                                   onchange="updateReviewField(${idx}, 'customCollection', this.value)"
+                                   placeholder="Collection"
+                                   style="width: 150px;">
                         </td>
                     </tr>
                 `;
@@ -1125,7 +1132,9 @@ Paste your product URLs here..."></textarea>
 
             products.forEach((product, productIdx) => {
                 const calc = product.calculated || {};
-                const collectionInfo = autoAssignCollection(product);
+
+                // Use custom collection if set, otherwise auto-assign
+                const finalCollection = product.customCollection || autoAssignCollection(product).collection;
 
                 // AdminCalc data (source of truth for pricing)
                 const variantPrice = calc.msrpRounded || 0;
@@ -1194,7 +1203,7 @@ Paste your product URLs here..."></textarea>
                                 'FALSE',
                                 'active',
                                 costPerItem,
-                                collectionInfo.collection
+                                finalCollection
                             ]);
                             imagePosition++;
                         });
@@ -1237,7 +1246,7 @@ Paste your product URLs here..."></textarea>
                             'FALSE',
                             'active',
                             costPerItem,
-                            collectionInfo.collection
+                            finalCollection
                         ]);
                         imagePosition++;
                     });
@@ -1276,7 +1285,7 @@ Paste your product URLs here..."></textarea>
                             'FALSE',
                             'active',
                             costPerItem,
-                            collectionInfo.collection
+                            finalCollection
                         ]);
                         imagePosition++;
                     });
@@ -1312,7 +1321,7 @@ Paste your product URLs here..."></textarea>
                         'FALSE',
                         'active',
                         costPerItem,
-                        collectionInfo.collection
+                        finalCollection
                     ]);
                 }
 
