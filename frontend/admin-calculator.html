@@ -582,6 +582,7 @@ Paste your product URLs here..."></textarea>
                     vendor: p.brand || p.retailer || 'Unknown',
                     basePrice: p.price || 0,
                     customMargin: null,
+                    cuftOverride: null,
                     // Store additional ZEITS data for CSV export
                     breadcrumbs: p.breadcrumbs || [],
                     descriptionHtml: p.description || '',
@@ -638,6 +639,16 @@ Paste your product URLs here..."></textarea>
                         <h4>Shipping Boxes</h4>
                         <div id="boxes-${idx}"></div>
                         <button class="btn-add-box" onclick="addBox(${idx})">+ Add Box</button>
+                    </div>
+
+                    <div class="margin-editor" style="background: #e3f2fd; border-left: 5px solid #2196f3;">
+                        <label style="color: #1565c0;">Override Cubic Footage (ft³)</label>
+                        <div class="margin-input-group">
+                            <input type="number" id="cuft-override-${idx}" step="0.001" min="0"
+                                   placeholder="Auto-calculated"
+                                   onchange="updateCuftOverride(${idx}, parseFloat(this.value) || null)">
+                            <span class="margin-suggestion" id="cuft-suggestion-${idx}"></span>
+                        </div>
                     </div>
 
                     <div class="margin-editor">
@@ -734,6 +745,24 @@ Paste your product URLs here..."></textarea>
             calculatePricing(productIdx);
         }
 
+        // Update cubic feet override
+        function updateCuftOverride(productIdx, value) {
+            products[productIdx].cuftOverride = value;
+            calculatePricing(productIdx);
+        }
+
+        // Update review field
+        function updateReviewField(productIdx, field, value) {
+            products[productIdx][field] = value;
+        }
+
+        // Update MSRP override
+        function updateMsrpOverride(productIdx, value) {
+            if (products[productIdx].calculated) {
+                products[productIdx].calculated.msrpRounded = value;
+            }
+        }
+
         // Calculate pricing
         function calculatePricing(productIdx) {
             const product = products[productIdx];
@@ -746,8 +775,13 @@ Paste your product URLs here..."></textarea>
                 totalCubicFeet += cubicInches / 1728;
             });
 
-            // Freight: $8.50 per cubic foot, $30 minimum
-            const freightCost = Math.max(30, totalCubicFeet * 8.5);
+            // Use override if available, otherwise calculate
+            const effectiveCubicFeet = product.cuftOverride !== null && product.cuftOverride !== undefined
+                ? product.cuftOverride
+                : totalCubicFeet;
+
+            // Freight: $10 per cubic foot, $30 minimum
+            const freightCost = Math.max(30, effectiveCubicFeet * 10);
 
             // Duty: 25% of item price
             const dutyAmount = basePrice * 0.25;
@@ -772,6 +806,7 @@ Paste your product URLs here..."></textarea>
             // Store calculated values
             product.calculated = {
                 totalCubicFeet,
+                effectiveCubicFeet,
                 freightCost,
                 dutyAmount,
                 wharfage,
@@ -781,6 +816,17 @@ Paste your product URLs here..."></textarea>
                 msrpBeforeRounding,
                 msrpRounded
             };
+
+            // Update cubic feet override input
+            const cuftOverrideInput = document.getElementById(`cuft-override-${productIdx}`);
+            const cuftSuggestion = document.getElementById(`cuft-suggestion-${productIdx}`);
+            if (cuftSuggestion) {
+                if (product.cuftOverride !== null && product.cuftOverride !== undefined) {
+                    cuftSuggestion.textContent = `Calculated: ${totalCubicFeet.toFixed(3)} ft³`;
+                } else {
+                    cuftSuggestion.textContent = `Using calculated: ${totalCubicFeet.toFixed(3)} ft³`;
+                }
+            }
 
             // Update margin input
             const marginInput = document.getElementById(`margin-${productIdx}`);
@@ -797,17 +843,21 @@ Paste your product URLs here..."></textarea>
             // Update pricing display
             const pricingDiv = document.getElementById(`pricing-${productIdx}`);
             if (pricingDiv) {
+                const cuftDisplayValue = product.cuftOverride !== null && product.cuftOverride !== undefined
+                    ? `${effectiveCubicFeet.toFixed(3)} ft³ (overridden)`
+                    : `${totalCubicFeet.toFixed(3)} ft³`;
+
                 pricingDiv.innerHTML = `
                     <div class="price-row">
                         <span>Total Cubic Feet (${product.boxes.length} box${product.boxes.length > 1 ? 'es' : ''}):</span>
-                        <span>${totalCubicFeet.toFixed(3)} ft³</span>
+                        <span>${cuftDisplayValue}</span>
                     </div>
                     <div class="price-row">
                         <span>Product Price:</span>
                         <span>$${basePrice.toFixed(2)}</span>
                     </div>
                     <div class="price-row">
-                        <span>Freight Cost:</span>
+                        <span>Freight Cost ($10/ft³, $30 min):</span>
                         <span>$${freightCost.toFixed(2)}</span>
                     </div>
                     <div class="price-row">
@@ -864,13 +914,13 @@ Paste your product URLs here..."></textarea>
                 return `
                     <tr>
                         <td>${product.name || 'Unnamed'}</td>
-                        <td><input type="text" value="${product.vendor}" onchange="products[${idx}].vendor = this.value"></td>
-                        <td><input type="text" value="${productType}" onchange="products[${idx}].type = this.value"></td>
-                        <td><input type="text" value="${tags}" onchange="products[${idx}].tags = this.value"></td>
+                        <td><input type="text" value="${product.vendor}" onchange="updateReviewField(${idx}, 'vendor', this.value)"></td>
+                        <td><input type="text" value="${productType}" onchange="updateReviewField(${idx}, 'type', this.value)"></td>
+                        <td><input type="text" value="${tags}" onchange="updateReviewField(${idx}, 'tags', this.value)"></td>
                         <td>$${(calc.landedCost || 0).toFixed(2)}</td>
                         <td>${(calc.marginPercent || 0).toFixed(1)}%</td>
-                        <td><input type="number" value="${(calc.msrpRounded || 0).toFixed(2)}" step="5" onchange="products[${idx}].calculated.msrpRounded = parseFloat(this.value)"></td>
-                        <td><input type="text" value="${product.sku || ''}" onchange="products[${idx}].sku = this.value"></td>
+                        <td><input type="number" value="${(calc.msrpRounded || 0).toFixed(2)}" step="5" onchange="updateMsrpOverride(${idx}, parseFloat(this.value))"></td>
+                        <td><input type="text" value="${product.sku || ''}" onchange="updateReviewField(${idx}, 'sku', this.value)"></td>
                         <td>
                             <span class="collection-badge ${collectionInfo.uncertain ? 'uncertain' : ''}">
                                 ${collectionInfo.collection}
