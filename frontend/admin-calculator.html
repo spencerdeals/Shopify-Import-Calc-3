@@ -432,6 +432,132 @@
             border: 2px dashed #ff9800;
         }
 
+        .image-carousel {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .carousel-images {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .carousel-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .carousel-image.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .carousel-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 5px;
+        }
+
+        .carousel-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            padding: 0;
+        }
+
+        .carousel-btn:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+
+        .carousel-counter {
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            flex: 1;
+            text-align: center;
+        }
+
+        .carousel-reorder {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .reorder-btn {
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            padding: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .reorder-btn:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+
+        .reorder-btn.delete {
+            background: rgba(244, 67, 54, 0.95);
+            color: white;
+        }
+
+        .reorder-btn.delete:hover {
+            background: #f44336;
+        }
+
+        .no-image {
+            width: 120px;
+            height: 120px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 12px;
+        }
+
         @media (max-width: 768px) {
             .content {
                 padding: 20px;
@@ -448,6 +574,16 @@
             .review-table th,
             .review-table td {
                 padding: 8px;
+            }
+
+            .image-carousel {
+                width: 80px;
+                height: 80px;
+            }
+
+            .no-image {
+                width: 80px;
+                height: 80px;
             }
         }
     </style>
@@ -916,8 +1052,45 @@ Paste your product URLs here..."></textarea>
                     product.customCollection = finalCollection;
                 }
 
+                // Store validated images array if not already done
+                if (!product.validatedImages) {
+                    const images = product.images || [product.image];
+                    product.validatedImages = images.filter(img => img && img.trim());
+                }
+                const validImages = product.validatedImages;
+
+                // Build image carousel HTML
+                const imageCarouselHtml = validImages.length > 0 ? `
+                    <div class="image-carousel" id="carousel-${idx}">
+                        <div class="carousel-images">
+                            ${validImages.map((img, imgIdx) => `
+                                <img src="${typeof img === 'object' ? (img.url || img) : img}"
+                                     alt="Product image ${imgIdx + 1}"
+                                     class="carousel-image ${imgIdx === 0 ? 'active' : ''}"
+                                     data-product="${idx}"
+                                     data-image="${imgIdx}">
+                            `).join('')}
+                        </div>
+                        <div class="carousel-controls">
+                            ${validImages.length > 1 ? `
+                                <button class="carousel-btn prev" onclick="carouselNav(${idx}, -1)" title="Previous image">‹</button>
+                                <span class="carousel-counter">1/${validImages.length}</span>
+                                <button class="carousel-btn next" onclick="carouselNav(${idx}, 1)" title="Next image">›</button>
+                            ` : `<span class="carousel-counter">1/1</span>`}
+                        </div>
+                        ${validImages.length > 1 ? `
+                            <div class="carousel-reorder">
+                                <button class="reorder-btn" onclick="reorderImage(${idx}, 'up')" title="Move image up (earlier in gallery)">↑</button>
+                                <button class="reorder-btn" onclick="reorderImage(${idx}, 'down')" title="Move image down (later in gallery)">↓</button>
+                                <button class="reorder-btn delete" onclick="deleteImage(${idx})" title="Remove current image">✕</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                ` : '<div class="no-image">No image</div>';
+
                 return `
                     <tr>
+                        <td>${imageCarouselHtml}</td>
                         <td>${product.name || 'Unnamed'}</td>
                         <td><input type="text" value="${product.vendor}" onchange="updateReviewField(${idx}, 'vendor', this.value)"></td>
                         <td><input type="text" value="${productType}" onchange="updateReviewField(${idx}, 'type', this.value)"></td>
@@ -941,6 +1114,7 @@ Paste your product URLs here..."></textarea>
                 <table class="review-table">
                     <thead>
                         <tr>
+                            <th>Images</th>
                             <th>Title</th>
                             <th>Vendor</th>
                             <th>Type</th>
@@ -1163,6 +1337,10 @@ Paste your product URLs here..."></textarea>
                 console.log(`TYPE_FROM_BREADCRUMBS: "${productType}" from [${breadcrumbs.map(b => typeof b === 'object' ? b.name : b).join(' / ')}]`);
                 console.log(`PRICE_LOCK: Variant Price = $${variantPrice.toFixed(2)}, Cost per item = $${costPerItem.toFixed(2)}`);
 
+                // Use validated/reordered images for export
+                const exportImages = product.validatedImages || product.images || [product.image];
+                const validExportImages = exportImages.filter(img => img && img.trim());
+
                 // Generate variant rows
                 let variantRows = [];
                 let imagePosition = 1;
@@ -1198,7 +1376,7 @@ Paste your product URLs here..."></textarea>
                                 'TRUE',
                                 'TRUE',
                                 '', // Barcode
-                                product.image || '',
+                                validExportImages[0] || '',
                                 imagePosition.toString(),
                                 'FALSE',
                                 'active',
@@ -1214,9 +1392,7 @@ Paste your product URLs here..."></textarea>
                         const tags = buildTags(product, breadcrumbs, { color });
                         const comboKey = buildComboKey(color, null);
                         const variantSku = buildVariantSku(baseSku, color, null);
-                        const variantImage = product.images && product.images[idx]
-                            ? (product.images[idx].url || product.images[idx])
-                            : product.image || '';
+                        const variantImage = validExportImages[idx] || validExportImages[0] || '';
 
                         variantRows.push([
                             handle,
@@ -1280,7 +1456,7 @@ Paste your product URLs here..."></textarea>
                             'TRUE',
                             'TRUE',
                             '',
-                            product.image || '',
+                            validExportImages[0] || '',
                             imagePosition.toString(),
                             'FALSE',
                             'active',
@@ -1316,7 +1492,7 @@ Paste your product URLs here..."></textarea>
                         'TRUE',
                         'TRUE',
                         '',
-                        product.image || '',
+                        validExportImages[0] || '',
                         '1',
                         'FALSE',
                         'active',
@@ -1383,6 +1559,89 @@ Paste your product URLs here..."></textarea>
             document.body.removeChild(link);
 
             console.log(`✅ CSV exported: ${filename}`);
+        }
+
+        // Carousel navigation
+        function carouselNav(productIdx, direction) {
+            const carousel = document.getElementById(`carousel-${productIdx}`);
+            const images = carousel.querySelectorAll('.carousel-image');
+            const counter = carousel.querySelector('.carousel-counter');
+
+            // Find current active image
+            let currentIdx = 0;
+            images.forEach((img, idx) => {
+                if (img.classList.contains('active')) {
+                    currentIdx = idx;
+                }
+            });
+
+            // Calculate new index
+            let newIdx = currentIdx + direction;
+            if (newIdx < 0) newIdx = images.length - 1;
+            if (newIdx >= images.length) newIdx = 0;
+
+            // Update active state
+            images[currentIdx].classList.remove('active');
+            images[newIdx].classList.add('active');
+
+            // Update counter
+            if (counter) {
+                counter.textContent = `${newIdx + 1}/${images.length}`;
+            }
+        }
+
+        // Reorder images
+        function reorderImage(productIdx, direction) {
+            const product = products[productIdx];
+            if (!product.validatedImages || product.validatedImages.length < 2) return;
+
+            const carousel = document.getElementById(`carousel-${productIdx}`);
+            const images = carousel.querySelectorAll('.carousel-image');
+
+            // Find current active image
+            let currentIdx = 0;
+            images.forEach((img, idx) => {
+                if (img.classList.contains('active')) {
+                    currentIdx = idx;
+                }
+            });
+
+            // Calculate swap index
+            let swapIdx = direction === 'up' ? currentIdx - 1 : currentIdx + 1;
+            if (swapIdx < 0 || swapIdx >= product.validatedImages.length) return;
+
+            // Swap in array
+            const temp = product.validatedImages[currentIdx];
+            product.validatedImages[currentIdx] = product.validatedImages[swapIdx];
+            product.validatedImages[swapIdx] = temp;
+
+            // Re-render review screen to show updated order
+            renderReviewScreen();
+        }
+
+        // Delete current image
+        function deleteImage(productIdx) {
+            const product = products[productIdx];
+            if (!product.validatedImages || product.validatedImages.length <= 1) {
+                alert('Cannot delete the only image');
+                return;
+            }
+
+            const carousel = document.getElementById(`carousel-${productIdx}`);
+            const images = carousel.querySelectorAll('.carousel-image');
+
+            // Find current active image
+            let currentIdx = 0;
+            images.forEach((img, idx) => {
+                if (img.classList.contains('active')) {
+                    currentIdx = idx;
+                }
+            });
+
+            if (confirm(`Remove image ${currentIdx + 1}?`)) {
+                product.validatedImages.splice(currentIdx, 1);
+                renderReviewScreen();
+            }
         }
 
         // Clear all
