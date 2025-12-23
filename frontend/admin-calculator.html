@@ -607,7 +607,7 @@
                            style="width: 100%; padding: 12px; font-size: 16px; font-weight: 600;
                                   border: 2px solid #667eea; border-radius: 8px;">
                     <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">
-                        Current rate: $<span id="currentRate">8.50</span>/ft³ (Minimum freight: $30)
+                        All calculations use: $<span id="currentRate">8.50</span>/ft³ (Minimum freight: $30)
                     </small>
                 </div>
 
@@ -648,9 +648,9 @@ Paste your product URLs here..."></textarea>
 
     <script>
         let products = [];
-        let freightRatePerCuft = 8.50; // Default: $8.50 per cubic foot
+        let freightRatePerCuft = 8.50; // Initial value: $8.50 per cubic foot (user can change)
 
-        // Update freight rate
+        // Update freight rate from user input
         function updateFreightRate(value) {
             freightRatePerCuft = value || 8.50;
             document.getElementById('currentRate').textContent = freightRatePerCuft.toFixed(2);
