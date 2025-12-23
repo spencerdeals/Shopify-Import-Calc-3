@@ -599,6 +599,18 @@
             <!-- Screen 1: Paste Links -->
             <div id="screen1" class="screen active">
                 <h2 class="section-title">Paste Product Links</h2>
+
+                <div class="form-group" style="max-width: 400px; margin-bottom: 30px;">
+                    <label for="freightRate">Freight Fee per Cubic Foot ($)</label>
+                    <input type="number" id="freightRate" step="0.01" min="0" value="8.50"
+                           onchange="updateFreightRate(parseFloat(this.value))"
+                           style="width: 100%; padding: 12px; font-size: 16px; font-weight: 600;
+                                  border: 2px solid #667eea; border-radius: 8px;">
+                    <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">
+                        Current rate: $<span id="currentRate">8.50</span>/ft³ (Minimum freight: $30)
+                    </small>
+                </div>
+
                 <div class="form-group">
                     <label for="productUrls">Product URLs (one per line)</label>
                     <textarea id="productUrls" rows="12" placeholder="https://www.amazon.com/product-link
@@ -636,6 +648,16 @@ Paste your product URLs here..."></textarea>
 
     <script>
         let products = [];
+        let freightRatePerCuft = 8.50; // Default: $8.50 per cubic foot
+
+        // Update freight rate
+        function updateFreightRate(value) {
+            freightRatePerCuft = value || 8.50;
+            document.getElementById('currentRate').textContent = freightRatePerCuft.toFixed(2);
+
+            // Recalculate all product pricing if products exist
+            products.forEach((_, idx) => calculatePricing(idx));
+        }
 
         // Dynamic margin rules
         function getDefaultMargin(landedCost) {
@@ -916,8 +938,8 @@ Paste your product URLs here..."></textarea>
                 ? product.cuftOverride
                 : totalCubicFeet;
 
-            // Freight: $10 per cubic foot, $30 minimum
-            const freightCost = Math.max(30, effectiveCubicFeet * 10);
+            // Freight: Use current rate per cubic foot, $30 minimum
+            const freightCost = Math.max(30, effectiveCubicFeet * freightRatePerCuft);
 
             // Duty: 25% of item price
             const dutyAmount = basePrice * 0.25;
@@ -993,7 +1015,7 @@ Paste your product URLs here..."></textarea>
                         <span>$${basePrice.toFixed(2)}</span>
                     </div>
                     <div class="price-row">
-                        <span>Freight Cost ($10/ft³, $30 min):</span>
+                        <span>Freight Cost ($${freightRatePerCuft.toFixed(2)}/ft³, $30 min):</span>
                         <span>$${freightCost.toFixed(2)}</span>
                     </div>
                     <div class="price-row">
