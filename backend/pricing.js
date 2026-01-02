@@ -1,6 +1,6 @@
 // backend/pricing.js
 module.exports = {
-  FREIGHT_RATE_PER_CUFT: 8.50,
+  FREIGHT_RATE_PER_CUFT: 18.00,
   CUSTOMS_CLEAR_FEE_PER_VENDOR: 10,
   DEFAULT_HANDLING_FEE: 15,
   CARD_FEE_RATE: 0.04,

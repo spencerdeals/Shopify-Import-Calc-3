@@ -13,8 +13,8 @@ function computeDutyWharfage({ itemUSD, usDeliveryUSD = 0, bermudaFreightUSD = 0
 }
 
 // Pricing constants for shipping & handling calculations
-const FREIGHT_RATE_PER_CUFT = 8.50;
-const SHIPPING_RATE_PER_CUBIC_FOOT = 8.50;
+const FREIGHT_RATE_PER_CUFT = 18.00;
+const SHIPPING_RATE_PER_CUBIC_FOOT = 18.00;
 const CUSTOMS_CLEAR_FEE_PER_VENDOR = 10;
 const MARGIN_RATE = 0.25;
 const MARGIN_RATE_OF_LANDED = 0.25;
