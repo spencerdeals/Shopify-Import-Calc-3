@@ -602,12 +602,12 @@
 
                 <div class="form-group" style="max-width: 400px; margin-bottom: 30px;">
                     <label for="freightRate">Freight Fee per Cubic Foot ($)</label>
-                    <input type="number" id="freightRate" step="0.01" min="0" value="8.50"
+                    <input type="number" id="freightRate" step="0.01" min="0" value="18.00"
                            onchange="updateFreightRate(parseFloat(this.value))"
                            style="width: 100%; padding: 12px; font-size: 16px; font-weight: 600;
                                   border: 2px solid #667eea; border-radius: 8px;">
                     <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">
-                        All calculations use: $<span id="currentRate">8.50</span>/ft³ (Minimum freight: $30)
+                        All calculations use: $<span id="currentRate">18.00</span>/ft³ (Minimum freight: $30)
                     </small>
                 </div>
 
@@ -648,11 +648,11 @@ Paste your product URLs here..."></textarea>
 
     <script>
         let products = [];
-        let freightRatePerCuft = 8.50; // Initial value: $8.50 per cubic foot (user can change)
+        let freightRatePerCuft = 18.00; // Initial value: $18.00 per cubic foot (user can change)
 
         // Update freight rate from user input
         function updateFreightRate(value) {
-            freightRatePerCuft = value || 8.50;
+            freightRatePerCuft = value || 18.00;
             document.getElementById('currentRate').textContent = freightRatePerCuft.toFixed(2);
 
             // Recalculate all product pricing if products exist
@@ -886,6 +886,8 @@ Paste your product URLs here..."></textarea>
         // Update box dimension
         function updateBoxDimension(productIdx, boxIdx, field, value) {
             products[productIdx].boxes[boxIdx][field] = value || 0;
+            // Clear override when box dimensions change to use auto-calculated value
+            products[productIdx].cuftOverride = null;
             calculatePricing(productIdx);
         }
 
@@ -978,11 +980,17 @@ Paste your product URLs here..."></textarea>
             // Update cubic feet override input
             const cuftOverrideInput = document.getElementById(`cuft-override-${productIdx}`);
             const cuftSuggestion = document.getElementById(`cuft-suggestion-${productIdx}`);
+
+            // Always populate the input with the effective cubic footage
+            if (cuftOverrideInput) {
+                cuftOverrideInput.value = effectiveCubicFeet.toFixed(3);
+            }
+
             if (cuftSuggestion) {
                 if (product.cuftOverride !== null && product.cuftOverride !== undefined) {
-                    cuftSuggestion.textContent = `Calculated: ${totalCubicFeet.toFixed(3)} ft³`;
+                    cuftSuggestion.textContent = `Auto-calculated from boxes: ${totalCubicFeet.toFixed(3)} ft³`;
                 } else {
-                    cuftSuggestion.textContent = `Using calculated: ${totalCubicFeet.toFixed(3)} ft³`;
+                    cuftSuggestion.textContent = `Calculated from ${product.boxes.length} box${product.boxes.length > 1 ? 'es' : ''}`;
                 }
             }
 
