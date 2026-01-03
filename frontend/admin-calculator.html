@@ -661,19 +661,19 @@ Paste your product URLs here..."></textarea>
 
         // Dynamic margin rules
         function getDefaultMargin(landedCost) {
-            if (landedCost < 200) return 60;
-            if (landedCost < 500) return 50;
-            if (landedCost < 1000) return 45;
-            if (landedCost < 2500) return 40;
-            return 38;
+            if (landedCost < 200) return 70;
+            if (landedCost < 500) return 60;
+            if (landedCost < 1000) return 55;
+            if (landedCost < 2500) return 50;
+            return 48;
         }
 
         function getMarginTierLabel(landedCost) {
-            if (landedCost < 200) return 'Under $200: 60% margin';
-            if (landedCost < 500) return '$200-$499: 50% margin';
-            if (landedCost < 1000) return '$500-$999: 45% margin';
-            if (landedCost < 2500) return '$1,000-$2,499: 40% margin';
-            return 'Over $2,500: 38% margin';
+            if (landedCost < 200) return 'Under $200: 70% margin';
+            if (landedCost < 500) return '$200-$499: 60% margin';
+            if (landedCost < 1000) return '$500-$999: 55% margin';
+            if (landedCost < 2500) return '$1,000-$2,499: 50% margin';
+            return 'Over $2,500: 48% margin';
         }
 
         // Round up to next $5
