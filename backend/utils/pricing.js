@@ -38,13 +38,13 @@ function computeWharfage({ itemUSD, njTaxUSD = 0, wharfageRate = WHARFAGE_PCT })
  * - cubicFeet: volume in ft³
  * - priceUSD: item price for fallback calculation
  * - fallbackPctOfPrice: percentage of price to use when no dimensions (default 0.5 = 50%)
- * - ratePerFt3: defaults to process.env.OCEAN_RATE_PER_FT3 || 8.5
+ * - ratePerFt3: defaults to process.env.OCEAN_RATE_PER_FT3 || 18
  * - minFreightUSD: defaults to process.env.MIN_FREIGHT_USD || 30
  * Returns: { freight, inputs: { mode, cubicFeet, ratePerFt3, minFreightUSD, fallbackPctOfPrice } }
  */
 function computeFreight(opts = {}) {
   const cf = Number(opts.cubicFeet || 0);
-  const rate = Number(opts.ratePerFt3 ?? process.env.OCEAN_RATE_PER_FT3 ?? 8.5);
+  const rate = Number(opts.ratePerFt3 ?? process.env.OCEAN_RATE_PER_FT3 ?? 18);
   const minF = Number(opts.minFreightUSD ?? process.env.MIN_FREIGHT_USD ?? 30);
   const priceUSD = Number(opts.priceUSD || 0);
   const fallbackPct = Number(opts.fallbackPctOfPrice ?? 0.5);
@@ -80,7 +80,7 @@ function computePricing(opts = {}) {
     itemPriceUSD = 0,
     cubicFeet = 0,
     dutyRatePct = 25,
-    ratePerFt3 = Number(process.env.OCEAN_RATE_PER_FT3 ?? 8.5),
+    ratePerFt3 = Number(process.env.OCEAN_RATE_PER_FT3 ?? 18),
     minFreightUSD = Number(process.env.MIN_FREIGHT_USD ?? 30),
     applyNJTax = String(process.env.APPLY_NJ_TAX ?? "true") === "true",
     njTaxRatePct = Number(process.env.NJ_TAX_RATE_PCT ?? 6.625),

@@ -221,7 +221,7 @@ router.post('/actual-cartons-csv', requireAdminKey, async (req, res) => {
 });
 
 router.get('/ping', (req, res) => {
-  const oceanRate = Number(process.env.OCEAN_RATE_PER_FT3 || 8.5);
+  const oceanRate = Number(process.env.OCEAN_RATE_PER_FT3 || 18);
   const minFreight = Number(process.env.MIN_FREIGHT_USD || 30);
   const njTaxRate = Number(process.env.NJ_TAX_RATE_PCT || 6.625);
 
