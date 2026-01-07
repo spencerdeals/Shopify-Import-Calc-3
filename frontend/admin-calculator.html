@@ -655,6 +655,16 @@ Paste your product URLs here..."></textarea>
             freightRatePerCuft = value || 18.00;
             document.getElementById('currentRate').textContent = freightRatePerCuft.toFixed(2);
 
+            // Update all product freight rate suggestions that are not overridden
+            products.forEach((product, idx) => {
+                if (product.freightRateOverride === null || product.freightRateOverride === undefined) {
+                    const freightRateSuggestion = document.getElementById(`freight-rate-suggestion-${idx}`);
+                    if (freightRateSuggestion) {
+                        freightRateSuggestion.textContent = `Using global: $${freightRatePerCuft.toFixed(2)}/ft³`;
+                    }
+                }
+            });
+
             // Recalculate all product pricing if products exist
             products.forEach((_, idx) => calculatePricing(idx));
         }
@@ -741,6 +751,8 @@ Paste your product URLs here..."></textarea>
                     basePrice: p.price || 0,
                     customMargin: null,
                     cuftOverride: null,
+                    freightRateOverride: null,
+                    dutyRateOverride: null,
                     // Store additional ZEITS data for CSV export
                     breadcrumbs: p.breadcrumbs || [],
                     descriptionHtml: p.description || '',
@@ -806,6 +818,26 @@ Paste your product URLs here..."></textarea>
                                    placeholder="Auto-calculated"
                                    onchange="updateCuftOverride(${idx}, parseFloat(this.value) || null)">
                             <span class="margin-suggestion" id="cuft-suggestion-${idx}"></span>
+                        </div>
+                    </div>
+
+                    <div class="margin-editor" style="background: #fff3e0; border-left: 5px solid #ff9800;">
+                        <label style="color: #e65100;">Freight Rate ($/ft³)</label>
+                        <div class="margin-input-group">
+                            <input type="number" id="freight-rate-${idx}" step="0.01" min="0"
+                                   placeholder="18.00"
+                                   onchange="updateFreightRateOverride(${idx}, parseFloat(this.value) || null)">
+                            <span class="margin-suggestion" id="freight-rate-suggestion-${idx}">Using global: $18.00/ft³</span>
+                        </div>
+                    </div>
+
+                    <div class="margin-editor" style="background: #fce4ec; border-left: 5px solid #e91e63;">
+                        <label style="color: #c2185b;">Duty & Wharfage Rate (%)</label>
+                        <div class="margin-input-group">
+                            <input type="number" id="duty-rate-${idx}" step="0.01" min="0" max="100"
+                                   placeholder="26.25"
+                                   onchange="updateDutyRate(${idx}, parseFloat(this.value) || null)">
+                            <span class="margin-suggestion" id="duty-rate-suggestion-${idx}">Default: 26.25%</span>
                         </div>
                     </div>
 
@@ -911,6 +943,34 @@ Paste your product URLs here..."></textarea>
             calculatePricing(productIdx);
         }
 
+        // Update freight rate override
+        function updateFreightRateOverride(productIdx, value) {
+            products[productIdx].freightRateOverride = value;
+            const freightRateSuggestion = document.getElementById(`freight-rate-suggestion-${productIdx}`);
+            if (freightRateSuggestion) {
+                if (value) {
+                    freightRateSuggestion.textContent = `Custom: $${value.toFixed(2)}/ft³`;
+                } else {
+                    freightRateSuggestion.textContent = `Using global: $${freightRatePerCuft.toFixed(2)}/ft³`;
+                }
+            }
+            calculatePricing(productIdx);
+        }
+
+        // Update duty rate
+        function updateDutyRate(productIdx, value) {
+            products[productIdx].dutyRateOverride = value;
+            const dutyRateSuggestion = document.getElementById(`duty-rate-suggestion-${productIdx}`);
+            if (dutyRateSuggestion) {
+                if (value) {
+                    dutyRateSuggestion.textContent = `Custom: ${value.toFixed(2)}%`;
+                } else {
+                    dutyRateSuggestion.textContent = `Default: 26.25%`;
+                }
+            }
+            calculatePricing(productIdx);
+        }
+
         // Update review field
         function updateReviewField(productIdx, field, value) {
             products[productIdx][field] = value;
@@ -940,17 +1000,28 @@ Paste your product URLs here..."></textarea>
                 ? product.cuftOverride
                 : totalCubicFeet;
 
-            // Freight: Use current rate per cubic foot, $30 minimum
-            const freightCost = Math.max(30, effectiveCubicFeet * freightRatePerCuft);
+            // Freight rate: Use product override if available, otherwise use global rate
+            const effectiveFreightRate = product.freightRateOverride !== null && product.freightRateOverride !== undefined
+                ? product.freightRateOverride
+                : freightRatePerCuft;
 
-            // Duty: 25% of item price
-            const dutyAmount = basePrice * 0.25;
+            // Freight: Use effective rate per cubic foot, $30 minimum
+            const freightCost = Math.max(30, effectiveCubicFeet * effectiveFreightRate);
 
-            // Wharfage: 1.5% of item price
-            const wharfage = basePrice * 0.015;
+            // Duty rate: Use product override if available, otherwise use default 26.25%
+            const effectiveDutyRate = product.dutyRateOverride !== null && product.dutyRateOverride !== undefined
+                ? product.dutyRateOverride / 100
+                : 0.2625;
+
+            // Duty & Wharfage: Use combined rate
+            const dutyAndWharfageCombined = basePrice * effectiveDutyRate;
+
+            // For display purposes, split approximately into duty and wharfage
+            const wharfage = dutyAndWharfageCombined * 0.057; // ~1.5% of 26.25%
+            const dutyAmount = dutyAndWharfageCombined - wharfage;
 
             // Total landed cost
-            const landedCost = basePrice + freightCost + dutyAmount + wharfage;
+            const landedCost = basePrice + freightCost + dutyAndWharfageCombined;
 
             // Determine margin
             const defaultMargin = getDefaultMargin(landedCost);
@@ -967,6 +1038,8 @@ Paste your product URLs here..."></textarea>
             product.calculated = {
                 totalCubicFeet,
                 effectiveCubicFeet,
+                effectiveFreightRate,
+                effectiveDutyRate: effectiveDutyRate * 100,
                 freightCost,
                 dutyAmount,
                 wharfage,
@@ -991,6 +1064,38 @@ Paste your product URLs here..."></textarea>
                     cuftSuggestion.textContent = `Auto-calculated from boxes: ${totalCubicFeet.toFixed(3)} ft³`;
                 } else {
                     cuftSuggestion.textContent = `Calculated from ${product.boxes.length} box${product.boxes.length > 1 ? 'es' : ''}`;
+                }
+            }
+
+            // Update freight rate input
+            const freightRateInput = document.getElementById(`freight-rate-${productIdx}`);
+            const freightRateSuggestion = document.getElementById(`freight-rate-suggestion-${productIdx}`);
+            if (freightRateInput) {
+                if (product.freightRateOverride !== null && product.freightRateOverride !== undefined) {
+                    freightRateInput.value = product.freightRateOverride.toFixed(2);
+                }
+            }
+            if (freightRateSuggestion) {
+                if (product.freightRateOverride !== null && product.freightRateOverride !== undefined) {
+                    freightRateSuggestion.textContent = `Custom: $${effectiveFreightRate.toFixed(2)}/ft³`;
+                } else {
+                    freightRateSuggestion.textContent = `Using global: $${freightRatePerCuft.toFixed(2)}/ft³`;
+                }
+            }
+
+            // Update duty rate input
+            const dutyRateInput = document.getElementById(`duty-rate-${productIdx}`);
+            const dutyRateSuggestion = document.getElementById(`duty-rate-suggestion-${productIdx}`);
+            if (dutyRateInput) {
+                if (product.dutyRateOverride !== null && product.dutyRateOverride !== undefined) {
+                    dutyRateInput.value = product.dutyRateOverride.toFixed(2);
+                }
+            }
+            if (dutyRateSuggestion) {
+                if (product.dutyRateOverride !== null && product.dutyRateOverride !== undefined) {
+                    dutyRateSuggestion.textContent = `Custom: ${(effectiveDutyRate * 100).toFixed(2)}%`;
+                } else {
+                    dutyRateSuggestion.textContent = `Default: 26.25%`;
                 }
             }
 
@@ -1023,16 +1128,12 @@ Paste your product URLs here..."></textarea>
                         <span>$${basePrice.toFixed(2)}</span>
                     </div>
                     <div class="price-row">
-                        <span>Freight Cost ($${freightRatePerCuft.toFixed(2)}/ft³, $30 min):</span>
+                        <span>Freight Cost ($${effectiveFreightRate.toFixed(2)}/ft³, $30 min):</span>
                         <span>$${freightCost.toFixed(2)}</span>
                     </div>
                     <div class="price-row">
-                        <span>Duty (25%):</span>
-                        <span>$${dutyAmount.toFixed(2)}</span>
-                    </div>
-                    <div class="price-row">
-                        <span>Wharfage (1.5%):</span>
-                        <span>$${wharfage.toFixed(2)}</span>
+                        <span>Duty & Wharfage (${(effectiveDutyRate * 100).toFixed(2)}%):</span>
+                        <span>$${dutyAndWharfageCombined.toFixed(2)}</span>
                     </div>
                     <div class="price-row highlight">
                         <span>Total Landed Cost:</span>
