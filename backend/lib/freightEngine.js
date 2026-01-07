@@ -2,7 +2,7 @@ const { toNum } = require("./dimensionUtils");
 const { classifyRetailer } = require("./retailerProfiles");
 const H = require("./categoryHeuristics");
 
-const RATE_PER_FT3   = toNum(process.env.FREIGHT_RATE_PER_FT3)      || 9;
+const RATE_PER_FT3   = toNum(process.env.FREIGHT_RATE_PER_FT3)      || 18;
 const BUF_PCT        = toNum(process.env.FREIGHT_DEFAULT_BUFFER_PCT) || 0.15;
 const FRAGILE_PCT    = toNum(process.env.FREIGHT_FRAGILE_PCT)        || 0.20;
 const OVERSIZE_PCT   = toNum(process.env.FREIGHT_OVERSIZE_PCT)       || 0.10;
