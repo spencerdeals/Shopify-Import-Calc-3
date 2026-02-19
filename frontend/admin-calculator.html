@@ -1054,16 +1054,20 @@ Paste your product URLs here..."></textarea>
             const cuftOverrideInput = document.getElementById(`cuft-override-${productIdx}`);
             const cuftSuggestion = document.getElementById(`cuft-suggestion-${productIdx}`);
 
-            // Always populate the input with the effective cubic footage
+            // Only populate the input if there's an explicit override
             if (cuftOverrideInput) {
-                cuftOverrideInput.value = effectiveCubicFeet.toFixed(3);
+                if (product.cuftOverride !== null && product.cuftOverride !== undefined) {
+                    cuftOverrideInput.value = product.cuftOverride.toFixed(3);
+                } else {
+                    cuftOverrideInput.value = '';
+                }
             }
 
             if (cuftSuggestion) {
                 if (product.cuftOverride !== null && product.cuftOverride !== undefined) {
                     cuftSuggestion.textContent = `Auto-calculated from boxes: ${totalCubicFeet.toFixed(3)} ft³`;
                 } else {
-                    cuftSuggestion.textContent = `Calculated from ${product.boxes.length} box${product.boxes.length > 1 ? 'es' : ''}`;
+                    cuftSuggestion.textContent = `Calculated from ${product.boxes.length} box${product.boxes.length > 1 ? 'es' : ''}: ${totalCubicFeet.toFixed(3)} ft³`;
                 }
             }
 
