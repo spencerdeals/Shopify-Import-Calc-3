@@ -38,7 +38,7 @@ function computeWharfage({ itemUSD, njTaxUSD = 0, wharfageRate = WHARFAGE_PCT })
  * - cubicFeet: volume in ft³
  * - priceUSD: item price for fallback calculation
  * - fallbackPctOfPrice: percentage of price to use when no dimensions (default 0.5 = 50%)
- * - ratePerFt3: defaults to process.env.OCEAN_RATE_PER_FT3 || 18
+ * - ratePerFt3: defaults to process.env.OCEAN_RATE_PER_FT3 || 20
  * - minFreightUSD: defaults to process.env.MIN_FREIGHT_USD || 30
  * Returns: { freight, inputs: { mode, cubicFeet, ratePerFt3, minFreightUSD, fallbackPctOfPrice } }
  */

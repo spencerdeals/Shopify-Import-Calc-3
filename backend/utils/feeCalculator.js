@@ -11,8 +11,8 @@ try { pricing = require('../pricing'); }
 catch (e) {
   console.warn("[feeCalculator] ../pricing not found, using emergency defaults");
   pricing = {
-    FREIGHT_RATE_PER_CUFT: 8.50,
-    SHIPPING_RATE_PER_CUBIC_FOOT: 8.50,
+    FREIGHT_RATE_PER_CUFT: 20.00,
+    SHIPPING_RATE_PER_CUBIC_FOOT: 20.00,
     CUSTOMS_CLEAR_FEE_PER_VENDOR: 10,
     MARGIN_RATE: 0.20,
     MARGIN_RATE_OF_LANDED: 0.20,
@@ -28,7 +28,7 @@ function computeShippingAndHandling({ cubicFeet = 0, landed = 0, vendors = 1 }) 
   const vndr = Math.max(1, Number(vendors) || 1);
   const landedBase = Math.max(0, Number(landed) || 0);
 
-  const oceanBase = cuft * (pricing.FREIGHT_RATE_PER_CUFT ?? pricing.SHIPPING_RATE_PER_CUBIC_FOOT ?? 8.50);
+  const oceanBase = cuft * (pricing.FREIGHT_RATE_PER_CUFT ?? pricing.SHIPPING_RATE_PER_CUBIC_FOOT ?? 20.00);
   const ocean = Math.max(30, oceanBase);
   const customs = vndr * (pricing.CUSTOMS_CLEAR_FEE_PER_VENDOR ?? 10);
 
