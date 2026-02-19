@@ -655,15 +655,6 @@ Paste your product URLs here..."></textarea>
             freightRatePerCuft = value || 20.00;
             document.getElementById('currentRate').textContent = freightRatePerCuft.toFixed(2);
 
-            // Update all product freight rate suggestions that are not overridden
-            products.forEach((product, idx) => {
-                if (product.freightRateOverride === null || product.freightRateOverride === undefined) {
-                    const freightRateSuggestion = document.getElementById(`freight-rate-suggestion-${idx}`);
-                    if (freightRateSuggestion) {
-                        freightRateSuggestion.textContent = `Using global: $${freightRatePerCuft.toFixed(2)}/ft³`;
-                    }
-                }
-            });
 
             // Recalculate all product pricing if products exist
             products.forEach((_, idx) => calculatePricing(idx));
@@ -751,7 +742,6 @@ Paste your product URLs here..."></textarea>
                     basePrice: p.price || 0,
                     customMargin: null,
                     cuftOverride: null,
-                    freightRateOverride: null,
                     dutyRateOverride: null,
                     // Store additional ZEITS data for CSV export
                     breadcrumbs: p.breadcrumbs || [],
@@ -818,16 +808,6 @@ Paste your product URLs here..."></textarea>
                                    placeholder="Auto-calculated"
                                    onchange="updateCuftOverride(${idx}, parseFloat(this.value) || null)">
                             <span class="margin-suggestion" id="cuft-suggestion-${idx}"></span>
-                        </div>
-                    </div>
-
-                    <div class="margin-editor" style="background: #fff3e0; border-left: 5px solid #ff9800;">
-                        <label style="color: #e65100;">Freight Rate ($/ft³)</label>
-                        <div class="margin-input-group">
-                            <input type="number" id="freight-rate-${idx}" step="0.01" min="0"
-                                   placeholder="20.00"
-                                   onchange="updateFreightRateOverride(${idx}, parseFloat(this.value) || null)">
-                            <span class="margin-suggestion" id="freight-rate-suggestion-${idx}">Using global: $20.00/ft³</span>
                         </div>
                     </div>
 
@@ -943,19 +923,6 @@ Paste your product URLs here..."></textarea>
             calculatePricing(productIdx);
         }
 
-        // Update freight rate override
-        function updateFreightRateOverride(productIdx, value) {
-            products[productIdx].freightRateOverride = value;
-            const freightRateSuggestion = document.getElementById(`freight-rate-suggestion-${productIdx}`);
-            if (freightRateSuggestion) {
-                if (value) {
-                    freightRateSuggestion.textContent = `Custom: $${value.toFixed(2)}/ft³`;
-                } else {
-                    freightRateSuggestion.textContent = `Using global: $${freightRatePerCuft.toFixed(2)}/ft³`;
-                }
-            }
-            calculatePricing(productIdx);
-        }
 
         // Update duty rate
         function updateDutyRate(productIdx, value) {
@@ -1000,13 +967,8 @@ Paste your product URLs here..."></textarea>
                 ? product.cuftOverride
                 : totalCubicFeet;
 
-            // Freight rate: Use product override if available, otherwise use global rate
-            const effectiveFreightRate = product.freightRateOverride !== null && product.freightRateOverride !== undefined
-                ? product.freightRateOverride
-                : freightRatePerCuft;
-
-            // Freight: Use effective rate per cubic foot, $30 minimum
-            const freightCost = Math.max(30, effectiveCubicFeet * effectiveFreightRate);
+            // Freight: Always use global rate per cubic foot, $30 minimum
+            const freightCost = Math.max(30, effectiveCubicFeet * freightRatePerCuft);
 
             // Duty rate: Use product override if available, otherwise use default 26.25%
             const effectiveDutyRate = product.dutyRateOverride !== null && product.dutyRateOverride !== undefined
@@ -1071,21 +1033,6 @@ Paste your product URLs here..."></textarea>
                 }
             }
 
-            // Update freight rate input
-            const freightRateInput = document.getElementById(`freight-rate-${productIdx}`);
-            const freightRateSuggestion = document.getElementById(`freight-rate-suggestion-${productIdx}`);
-            if (freightRateInput) {
-                if (product.freightRateOverride !== null && product.freightRateOverride !== undefined) {
-                    freightRateInput.value = product.freightRateOverride.toFixed(2);
-                }
-            }
-            if (freightRateSuggestion) {
-                if (product.freightRateOverride !== null && product.freightRateOverride !== undefined) {
-                    freightRateSuggestion.textContent = `Custom: $${effectiveFreightRate.toFixed(2)}/ft³`;
-                } else {
-                    freightRateSuggestion.textContent = `Using global: $${freightRatePerCuft.toFixed(2)}/ft³`;
-                }
-            }
 
             // Update duty rate input
             const dutyRateInput = document.getElementById(`duty-rate-${productIdx}`);
