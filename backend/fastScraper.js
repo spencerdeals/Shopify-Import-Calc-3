@@ -1435,15 +1435,30 @@ app.post('/api/scrape', async (req, res) => {
 
     // Legacy path: Batch URL scraping
     if (urls && Array.isArray(urls) && urls.length > 0) {
-      const sdlUrls = urls.filter(url => isSDLDomain(url));
+      // Sanitize URLs: Fix double query parameters (e.g., ?piid=X?piid=Y -> ?piid=X&piid=Y)
+      const sanitizedUrls = urls.map(url => {
+        try {
+          // Fix common malformed patterns: replace second ? with &
+          let cleaned = url.replace(/(\?.+)\?/g, '$1&');
+
+          // Validate URL can be parsed
+          new URL(cleaned);
+          return cleaned;
+        } catch (e) {
+          console.warn(`⚠️  Invalid URL detected, keeping original: ${url}`);
+          return url; // Return original if sanitization fails
+        }
+      });
+
+      const sdlUrls = sanitizedUrls.filter(url => isSDLDomain(url));
       if (sdlUrls.length > 0) {
         return res.status(400).json({
           error: 'SDL domain detected. This calculator is for importing products from other retailers.'
         });
       }
 
-      console.log(`\n🚀 Starting batch scrape for ${urls.length} products...`);
-      const products = await processBatch(urls);
+      console.log(`\n🚀 Starting batch scrape for ${sanitizedUrls.length} products...`);
+      const products = await processBatch(sanitizedUrls);
       console.log(`\n✅ Completed scraping ${products.length} products\n`);
 
       return res.json({ products });
