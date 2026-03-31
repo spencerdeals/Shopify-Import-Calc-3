@@ -988,10 +988,11 @@ Paste your product URLs here..."></textarea>
             // Determine margin
             const defaultMargin = getDefaultMargin(landedCost);
             const marginPercent = product.customMargin !== null ? product.customMargin : defaultMargin;
-            const marginAmount = landedCost * (marginPercent / 100);
 
-            // MSRP before rounding
-            const msrpBeforeRounding = landedCost + marginAmount;
+            // Calculate MSRP where margin is a percentage of the final MSRP
+            // MSRP = landedCost / (1 - marginPercent/100)
+            const msrpBeforeRounding = landedCost / (1 - marginPercent / 100);
+            const marginAmount = msrpBeforeRounding - landedCost;
 
             // Round UP to next $5
             const msrpRounded = roundToNext5(msrpBeforeRounding);
