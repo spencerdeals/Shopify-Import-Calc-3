@@ -199,6 +199,9 @@ app.get('/admin', requireAdmin, (req, res) => {
 });
 
 app.get('/admin-calculator', requireAdmin, (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
   res.sendFile(path.join(__dirname, '../frontend/admin-calculator.html'));
 });
 
