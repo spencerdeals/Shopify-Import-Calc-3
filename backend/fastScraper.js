@@ -108,7 +108,8 @@ function clampByMultiplier(total, price, { minMult = 1.7, maxMult = 2.5, fallbac
 function capCartonByCategory(cuft, { title = "", category = "", brand = "" } = {}) {
   const hay = `${title} ${category} ${brand}`.toLowerCase();
   const caps = [
-    { re:/sofa|sectional|chaise|loveseat/, cap: 40 },
+    { re:/sofa.{1,10}loveseat|loveseat.{1,10}sofa/, cap: 90 },
+    { re:/sofa|sectional|chaise|loveseat/, cap: 55 },
     { re:/bed|headboard|frame/,           cap: 28 },
     { re:/dresser|sideboard/,             cap: 24 },
     { re:/tv stand|media console/,        cap: 20 },

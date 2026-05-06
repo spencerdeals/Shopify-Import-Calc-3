@@ -115,6 +115,8 @@ function sofaCuFt(p){
   const t = joinText(p);
   if(!/(sofa|sectional|loveseat|couch)/.test(t)) return null;
   if(/sectional/.test(t)) return { cuft: 55, meta:{kind:"sectional"} };
+  // "sofa and loveseat" sets contain both pieces — use combined volume
+  if(/(sofa.{1,10}loveseat|loveseat.{1,10}sofa)/.test(t)) return { cuft: 80, meta:{kind:"sofa+loveseat set"} };
   if(/loveseat/.test(t))  return { cuft: 35, meta:{kind:"loveseat"} };
   return { cuft: 45, meta:{kind:"sofa"} };
 }
