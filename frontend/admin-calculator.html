@@ -600,17 +600,6 @@
             <div id="screen1" class="screen active">
                 <h2 class="section-title">Paste Product Links</h2>
 
-                <div class="form-group" style="max-width: 400px; margin-bottom: 30px;">
-                    <label for="freightRate">Freight Fee per Cubic Foot ($)</label>
-                    <input type="number" id="freightRate" step="0.01" min="0" value="18.00"
-                           readonly
-                           style="width: 100%; padding: 12px; font-size: 16px; font-weight: 600;
-                                  border: 2px solid #667eea; border-radius: 8px; background: #f5f5f5; cursor: not-allowed;">
-                    <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">
-                        All calculations use: $<span id="currentRate">18.00</span>/ft³ (Minimum freight: $30)
-                    </small>
-                </div>
-
                 <div class="form-group">
                     <label for="productUrls">Product URLs (one per line)</label>
                     <textarea id="productUrls" rows="12" placeholder="https://www.amazon.com/product-link
@@ -627,6 +616,19 @@ Paste your product URLs here..."></textarea>
             <!-- Screen 2: Dimensions & Costs -->
             <div id="screen2" class="screen">
                 <h2 class="section-title">Dimensions & Costs</h2>
+
+                <div class="margin-editor" style="background: #e8f5e9; border-left: 5px solid #4caf50; margin-bottom: 25px;">
+                    <label style="color: #2e7d32; font-size: 15px;">Freight Rate per Cubic Foot ($)</label>
+                    <div class="margin-input-group">
+                        <input type="number" id="freightRate" step="0.01" min="0" value="18.00"
+                               aria-label="Freight rate per cubic foot"
+                               style="width: 140px; padding: 12px; font-size: 18px; font-weight: 700; border: 2px solid #4caf50; border-radius: 8px;"
+                               oninput="updateFreightRate(this.value)">
+                        <span class="margin-suggestion" id="freight-rate-suggestion">Minimum freight charge: $30.00</span>
+                    </div>
+                    <small style="display: block; margin-top: 8px; color: #555;">Change this rate to update freight cost, landed cost, profit, and final MSRP for every product immediately.</small>
+                </div>
+
                 <div id="productsContainer"></div>
                 <div style="margin-top: 30px; padding-top: 30px; border-top: 2px solid #e0e0e0;">
                     <button class="btn btn-secondary" onclick="goToScreen(1)">Back</button>
@@ -648,15 +650,24 @@ Paste your product URLs here..."></textarea>
 
     <script>
         let products = [];
-        const FIXED_FREIGHT_RATE = 18.00;
-        let freightRatePerCuft = FIXED_FREIGHT_RATE;
+        const DEFAULT_FREIGHT_RATE = 18.00;
+        let freightRatePerCuft = DEFAULT_FREIGHT_RATE;
 
-        // Update freight rate display (rate is fixed at $18/ft³)
-        function updateFreightRate(value) {
-            freightRatePerCuft = FIXED_FREIGHT_RATE;
-            document.getElementById('freightRate').value = FIXED_FREIGHT_RATE.toFixed(2);
-            document.getElementById('currentRate').textContent = freightRatePerCuft.toFixed(2);
+        // Update freight rate from user input and recalculate all products
+        function updateFreightRate(rawValue) {
+            const value = String(rawValue).trim();
+            const parsed = value === '' ? DEFAULT_FREIGHT_RATE : Number(value);
+            freightRatePerCuft = isNaN(parsed) || parsed < 0 ? DEFAULT_FREIGHT_RATE : parsed;
 
+            const rateInput = document.getElementById('freightRate');
+            if (rateInput && document.activeElement !== rateInput) {
+                rateInput.value = freightRatePerCuft.toFixed(2);
+            }
+
+            const suggestion = document.getElementById('freight-rate-suggestion');
+            if (suggestion) {
+                suggestion.textContent = `Minimum freight charge: $30.00  |  Current: ${freightRatePerCuft.toFixed(2)}/ft³`;
+            }
 
             // Recalculate all product pricing if products exist
             products.forEach((_, idx) => calculatePricing(idx));
@@ -837,6 +848,16 @@ Paste your product URLs here..."></textarea>
                     <div class="pricing-section" id="pricing-${idx}"></div>
                 </div>
             `).join('');
+
+            // Sync freight rate display with current value
+            const rateInput = document.getElementById('freightRate');
+            if (rateInput) {
+                rateInput.value = freightRatePerCuft.toFixed(2);
+            }
+            const rateSuggestion = document.getElementById('freight-rate-suggestion');
+            if (rateSuggestion) {
+                rateSuggestion.textContent = `Minimum freight charge: $30.00  |  Current: ${freightRatePerCuft.toFixed(2)}/ft³`;
+            }
 
             // Render boxes and calculate pricing for each product
             products.forEach((_, idx) => {
