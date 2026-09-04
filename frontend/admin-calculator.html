@@ -804,13 +804,15 @@ Paste your product URLs here..."></textarea>
                     </div>
 
                     <div class="margin-editor" style="background: #e3f2fd; border-left: 5px solid #2196f3;">
-                        <label style="color: #1565c0;">Override Cubic Footage (ft³)</label>
+                        <label style="color: #1565c0;">Cubic Footage Used for Estimate (ft³)</label>
                         <div class="margin-input-group">
                             <input type="number" id="cuft-override-${idx}" step="0.001" min="0"
                                    placeholder="Auto-calculated"
-                                   onchange="updateCuftOverride(${idx}, parseFloat(this.value) || null)">
+                                   aria-label="Cubic footage used for estimate"
+                                   oninput="updateCuftOverride(${idx}, this.value)">
                             <span class="margin-suggestion" id="cuft-suggestion-${idx}"></span>
                         </div>
+                        <small style="display: block; margin-top: 8px; color: #555;">Change this number to update freight, landed cost, profit, and final MSRP immediately.</small>
                     </div>
 
                     <div class="margin-editor" style="background: #fce4ec; border-left: 5px solid #e91e63;">
@@ -920,8 +922,9 @@ Paste your product URLs here..."></textarea>
         }
 
         // Update cubic feet override
-        function updateCuftOverride(productIdx, value) {
-            products[productIdx].cuftOverride = value;
+        function updateCuftOverride(productIdx, rawValue) {
+            const value = String(rawValue).trim();
+            products[productIdx].cuftOverride = value === '' ? null : Number(value);
             calculatePricing(productIdx);
         }
 
@@ -1020,7 +1023,7 @@ Paste your product URLs here..."></textarea>
             const cuftSuggestion = document.getElementById(`cuft-suggestion-${productIdx}`);
 
             // Only populate the input if there's an explicit override
-            if (cuftOverrideInput) {
+            if (cuftOverrideInput && document.activeElement !== cuftOverrideInput) {
                 if (product.cuftOverride !== null && product.cuftOverride !== undefined) {
                     cuftOverrideInput.value = product.cuftOverride.toFixed(3);
                 } else {
